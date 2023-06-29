@@ -9,6 +9,10 @@ abstract class FSet[A] extends (A => Boolean):
 
   infix def +(el: A): FSet[A]
   infix def ++(anotherSet: FSet[A]): FSet[A]
+  infix def -(el: A): FSet[A]
+  infix def --(anotherSet: FSet[A]): FSet[A]
+  infix def &(anotherSet: FSet[A]): FSet[A]
+  def unary_! : FSet[A] = new PBSet[A](x => !contains(x))
 
   // "classics"
   def map[B](f: A => B): FSet[B]
@@ -17,17 +21,32 @@ abstract class FSet[A] extends (A => Boolean):
   def forEach(f: A => Unit): Unit
 end FSet
 
-case class Empty[A]() extends FSet[A]:
-  override def contains(el: A): Boolean = false
+class PBSet[A](property: A => Boolean) extends FSet[A]:
+  override def contains(el: A): Boolean = property(el)
 
+  override infix def +(el: A): FSet[A] =
+    new PBSet[A](x => x == el || contains(x))
+  override infix def ++(anotherSet: FSet[A]): FSet[A] =
+    new PBSet[A](x => property(x) || anotherSet(x))
+  override infix def -(el: A): FSet[A] = filter(_ != el)
+  override infix def --(anotherSet: FSet[A]): FSet[A] = filter(!anotherSet)
+  override infix def &(anotherSet: FSet[A]): FSet[A] = filter(anotherSet)
+
+  override def map[B](f: A => B): FSet[B] = politelyFail()
+  override def flatMap[B](f: A => FSet[B]): FSet[B] = politelyFail()
+  override def filter(predicate: A => Boolean): FSet[A] =
+    new PBSet[A](x => property(x) && predicate(x))
+  override def forEach(f: A => Unit): Unit = politelyFail()
+
+  private def politelyFail() = throw new RuntimeException("idk how to do that")
+end PBSet
+
+case class Empty[A]() extends PBSet[A](_ => false):
   override infix def +(el: A): FSet[A] = Cons(el, this)
   override infix def ++(anotherSet: FSet[A]): FSet[A] = anotherSet
-
   override def map[B](f: A => B): FSet[B] = Empty()
   override def flatMap[B](f: A => FSet[B]): FSet[B] = Empty()
-  override def filter(predicate: A => Boolean): FSet[A] = this
   override def forEach(f: A => Unit): Unit = ()
-end Empty
 
 case class Cons[A](head: A, tail: FSet[A]) extends FSet[A]:
   override def contains(el: A): Boolean =
@@ -38,6 +57,14 @@ case class Cons[A](head: A, tail: FSet[A]) extends FSet[A]:
     else Cons(el, this)
   override infix def ++(anotherSet: FSet[A]): FSet[A] =
     tail ++ anotherSet + head
+
+  override infix def -(el: A): FSet[A] =
+    if head == el then tail
+    else tail - el + head
+  override infix def --(anotherSet: FSet[A]): FSet[A] =
+    filter(!anotherSet(_))
+  override infix def &(anotherSet: FSet[A]): FSet[A] =
+    filter(anotherSet)
 
   override def map[B](f: A => B): FSet[B] =
     tail.map(f) + f(head)
@@ -63,9 +90,21 @@ object FSet:
 object FunctionalSetPlayground:
   def main(args: Array[String]): Unit =
     val first5 = FSet(1, 2, 3, 4, 5)
+    val someNums = FSet(4, 5, 6, 7, 8)
     assert(first5.contains(5))
     assert(!first5(6))
     assert((first5 + 10)(10))
     assert(first5.map(_ * 2)(10))
     assert(first5.map(_ % 2)(1))
     assert(!first5.flatMap(x => FSet(x, x + 1))(7))
+    assert(!(first5 - 3)(3))
+    assert(!(first5 -- someNums)(4))
+    val intersect = first5 & someNums
+    List(4, 5).foreach(x => assert(intersect(x)))
+
+    val naturals = new PBSet[Int](_ => true)
+    assert(naturals(99))
+    val notNaturals = !naturals
+    assert(!notNaturals(0))
+    assert((notNaturals + 1 + 2 + 3).contains(3))
+
