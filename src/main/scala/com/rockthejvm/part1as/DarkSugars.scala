@@ -19,17 +19,28 @@ def darkSugars(): Unit =
     // long code
     42
   }
+  
+  val anotherMethodCall_v2 = singleArgMethod:
+    // long code
+    42
 
   // example: Try, Future
   val aTryInstance = Try {
     throw new RuntimeException("gotcha")
   }
+  
+  val aTryInstance_v2 = Try:
+    throw new RuntimeException("gotcha")
 
   // hofs
   val anIncrementedList = List(1, 2, 3).map { x =>
     // long code
     x + 1
   }
+  
+  val anIncrementedList_v2 = List(1, 2, 3).map: x =>
+    // long code
+    x + 1
 
 
   // 2: single abstract method pattern (since Scala 2.12)

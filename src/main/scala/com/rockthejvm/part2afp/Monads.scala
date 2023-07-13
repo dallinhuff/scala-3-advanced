@@ -77,15 +77,13 @@ lazy val ioStory: Boolean =
   leftIdentity && rightIdentity && associativity
 
 def ioExamples(): Unit =
-  val aPossiblyMonad = IO {
-    println("doing something")
+  val aPossiblyMonad = IO:
+    println("a PM")
     42
-  }
 
-  val anotherPM = IO {
+  val anotherPM = IO:
     println("another PM")
     "Scala"
-  }
 
   val aForComprehension = for
     num <- aPossiblyMonad
@@ -94,15 +92,13 @@ def ioExamples(): Unit =
 
   println(aForComprehension.unsafeRun())
 
-  val fs = (x: Int) => IO {
+  val fs = (x: Int) => IO:
     println("incrementing")
     x + 1
-  }
 
-  val gs = (x: Int) => {
+  val gs = (x: Int) =>
     println("doubling")
     x * 2
-  }
 
 
 @main
