@@ -10,6 +10,6 @@ lazy val root = project
 
     libraryDependencies ++= Seq(
       "com.novocode" % "junit-interface" % "0.11" % "test",
-      "org.scala-lang.modules" %% "scala-parallel-collections" % "1.0.3"
+      "org.scala-lang.modules" %% "scala-parallel-collections" % "1.0.4"
     )
   )
